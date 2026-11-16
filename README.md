@@ -318,6 +318,59 @@ pass `--vulkaninfo-file vkinfo.txt`.
 That's expected: Lichii builds the pipelines from the cache on the first start. About 500 pipelines
 can't be regenerated from the game files and are built when the game first needs them.
 
+**The game closes without an error (e.g. when entering Hyrule Castle)**
+Usually SteamOS's low-memory guard (`earlyoom`) closed Lichii because RAM and swap were full. The
+Deck's GPU uses the same 16 GB as the system, so shaders and textures count against it too. To check,
+run this right after it happens:
+
+```bash
+journalctl -b | grep -E "earlyoom.*(low memory|sending SIG)"
+```
+
+Lines with `sending SIGTERM` or `sending SIGKILL to process ... "AppRun" ... lichii` confirm it.
+
+Lichii has no setting for how many shaders it keeps built. It keeps as many graphics pipelines as fit
+in a quarter of the RAM (about 12,600 on the Deck, roughly 3.7 GB). **build_all_cached_shaders** only
+changes whether they are built on the loading screen or in the background afterwards, not how many.
+What helps:
+
+- **More swap.** Built pipelines that aren't in use can be swapped out, but SteamOS has little real
+  swap: `swapon --show` typically lists `/dev/zram0` (compressed swap in RAM, so no help once RAM is
+  full) and a `/home/swapfile` of only 1 GB. Make the swap file bigger (here 16 GB, needs that much
+  free space in `/home`; check with `df -h /home`):
+
+  ```bash
+  sudo swapoff /home/swapfile
+  sudo fallocate -l 16G /home/swapfile
+  sudo mkswap /home/swapfile
+  sudo swapon /home/swapfile
+  ```
+
+- **Close other programs** (browser, Decky plugins) and keep the resolution at 0.5X or lower.
+- **A smaller cache.** Lichii only builds what is in the cache. Going back to the old cache (see
+  below) or starting with an empty one keeps memory lower, at the cost of stutter in new places.
+
+To rule out the cache, rename `~/.cache/lichii/shader/0400486024dec000` and try again. If the problem
+goes away, please open an issue and attach the log.
+
+**GPU resets or a GLX crash on other Linux PCs**
+One user report (not verified by this project) helped with GPU resets on a PC whose driver offers mesh
+shaders. In Steam, right-click Lichii → **Properties…** → **Launch Options**:
+
+```
+QT_XCB_GL_INTEGRATION=xcb_egl EDEN_NX2_FORCE_MESH_FALLBACK=1 %command%
+```
+
+`EDEN_NX2_FORCE_MESH_FALLBACK=1` turns off `VK_EXT_mesh_shader`; `QT_XCB_GL_INTEGRATION=xcb_egl` avoids
+a GLX segfault. On the Steam Deck the mesh-shader setting changes nothing: its driver doesn't offer mesh
+shaders, and Lichii already logs `Removing features for unsuitable extension VK_EXT_mesh_shader`.
+
+**Where the logs are**
+- Lichii: `~/.local/share/lichii/log/eden_log.txt`. A new one is written on each start, so copy it right
+  after the problem, before starting Lichii again.
+- System: `journalctl -b` (memory kills: `grep earlyoom`; GPU resets: `journalctl -b -k | grep -i amdgpu`;
+  crashes: `coredumpctl list`).
+
 **Going back to your old cache**
 Close Lichii, then copy the files from the newest `scb-oot-backup-<date>` folder in
 `~/.cache/lichii/shader/0400486024dec000` back into that folder, and delete `lichii-cache.v2.bin` if
