@@ -1,14 +1,19 @@
 # scb-oot-steamdeck
 
-One script that builds a ready-made shader cache for **The Legend of Zelda: Ocarina of Time Remake
+A script that builds a ready-made shader cache for **The Legend of Zelda: Ocarina of Time Remake
 (Switch 2)** in the **Lichii** emulator on a **Steam Deck**, with
 [scb-oot](https://github.com/rafaelsmiranda/scb-oot) (Shader Cache Builder for OoT).
 
 scb-oot was made for Lichii builds 119 and 125. Newer Lichii builds handle shaders differently, so plain
-scb-oot either fails to build or produces a cache that newer builds mostly ignore. This script
-includes a patch that makes scb-oot work with current Lichii builds, and it takes care of the SteamOS
-parts: installing the compiler and the header files SteamOS leaves out, then switching read-only mode
-back on.
+scb-oot either fails to build or produces a cache that newer builds mostly ignore. This repository
+adds a patch that makes scb-oot work with current Lichii builds, and a script that applies it and takes
+care of the SteamOS parts: installing the compiler and the header files SteamOS leaves out, then
+switching read-only mode back on.
+
+| File | What it is |
+| --- | --- |
+| [`scb-oot-deck.sh`](scb-oot-deck.sh) | The script you run. |
+| [`scb-oot-current-lichii.patch`](scb-oot-current-lichii.patch) | The changes to scb-oot. The script needs it in the same folder. |
 
 > This repository contains no game files and no shader code. The shader code is generated on your
 > Deck from your own copy of the game, and nothing is uploaded anywhere.
@@ -56,8 +61,8 @@ yourself.
    `vulkan-tools`, and for the header files of `glibc`, `linux-api-headers` and `gcc`. If something is
    missing, it turns off SteamOS read-only mode, installs or reinstalls only those packages, and turns
    read-only mode back on. If nothing is missing, it changes nothing and doesn't ask for a password.
-2. **Downloads scb-oot** at the version the patch was made for, and applies the patch, which is built
-   into the script.
+2. **Downloads scb-oot** at the version the patch was made for, and applies
+   `scb-oot-current-lichii.patch` from the script's folder.
 3. **Downloads the Lichii sources** for the build you play on: only the folders the build needs. By
    default that's the newest Lichii release.
 4. **Runs scb-oot** with your options. scb-oot regenerates the shader code from your game file, builds
@@ -143,13 +148,14 @@ ip -4 addr show | grep inet
 
 Use the address that isn't `127.0.0.1`, for example `192.168.1.50`.
 
-**3. Copy the script from the PC** (in the folder where you downloaded or cloned this repository):
+**3. Copy the repository folder from the PC.** The script needs the patch file next to it, so copy
+the whole folder rather than just the script. In the folder that contains `scb-oot-steamdeck`:
 
 ```bash
-scp scb-oot-deck.sh deck@steamdeck:~/
+scp -r scb-oot-steamdeck deck@steamdeck:~/
 ```
 
-Replace `steamdeck` with the IP address if needed. The first time, confirm the host key with `yes`,
+Replace `steamdeck` after the `@` with the IP address if needed. The first time, confirm the host key with `yes`,
 then enter the `deck` password.
 
 **4. Run it over SSH**, or switch to the Deck and run it in Konsole:
@@ -170,10 +176,8 @@ sudo systemctl disable --now sshd
 ## Running it
 
 ```bash
-bash ~/scb-oot-deck.sh --nup "/path/to/your/game.nup"
+bash ~/scb-oot-steamdeck/scb-oot-deck.sh --nup "/path/to/your/game.nup"
 ```
-
-(With Option A the path is `~/scb-oot-steamdeck/scb-oot-deck.sh`.)
 
 Run it as the normal `deck` user, **not** with `sudo`. It asks for the password itself, and only when
 packages are missing.
@@ -185,13 +189,13 @@ Examples:
 
 ```bash
 # you play on an older Lichii build
-bash ~/scb-oot-deck.sh --nup "/path/to/your/game.nup" --lichii-tag build-160
+bash ~/scb-oot-steamdeck/scb-oot-deck.sh --nup "/path/to/your/game.nup" --lichii-tag build-160
 
 # no question before replacing, and the experimental fast first start
-bash ~/scb-oot-deck.sh --nup "/path/to/your/game.nup" --yes --fast-start 0
+bash ~/scb-oot-steamdeck/scb-oot-deck.sh --nup "/path/to/your/game.nup" --yes --fast-start 0
 
 # your Lichii keeps its cache somewhere else (portable install)
-bash ~/scb-oot-deck.sh --nup "/path/to/your/game.nup" --cache-dir "/path/to/user/cache/shader/0400486024dec000"
+bash ~/scb-oot-steamdeck/scb-oot-deck.sh --nup "/path/to/your/game.nup" --cache-dir "/path/to/user/cache/shader/0400486024dec000"
 ```
 
 ## Options
@@ -261,8 +265,8 @@ what's missing.
 
 ## What the patch changes in scb-oot
 
-The patch is built into the script (in the `SCB_OOT_PATCH_EOF` section) and applied to a clean scb-oot
-checkout each run. Compared to scb-oot it:
+The patch is [`scb-oot-current-lichii.patch`](scb-oot-current-lichii.patch). The script applies it to a
+clean scb-oot checkout on each run. Compared to scb-oot it:
 
 - **compiles against current Lichii sources**: Lichii build 130 and later moved the shader lowering and
   hashing into `native_lowering.cpp`, which scb-oot didn't compile, so linking failed with
@@ -286,6 +290,10 @@ them.
 
 **`undefined reference to VideoCommon::NativeShaderHash` (or similar)**
 You ran plain scb-oot against a current Lichii. Use this script, which applies the patch.
+
+**`scb-oot-current-lichii.patch not found next to this script`**
+Only the script was copied. Copy the whole `scb-oot-steamdeck` folder (or clone it), so the patch file
+is next to the script.
 
 **pacman errors (`error: ...`)**
 - `not enough free disk space`: the system partition is full. Check with `df -h /`.
@@ -323,7 +331,7 @@ The script already deletes its downloads and temporary files when it finishes. I
 rm -rf ~/scb-oot-build ~/.cache/scb-oot
 ```
 
-To remove the script itself, delete `~/scb-oot-deck.sh` or the `~/scb-oot-steamdeck` folder. The
+To remove the script itself, delete the `~/scb-oot-steamdeck` folder. The
 installed packages can stay; a SteamOS update removes them anyway.
 
 ## Credits and license
