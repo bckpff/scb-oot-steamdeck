@@ -87,6 +87,7 @@ CLEANUP=1
 
 # ---- 1. system dependencies --------------------------------------------------------------------
 READONLY_CHANGED=0
+PACMAN_CONF_CHANGED=0
 cleanup() {
     [[ $CLEANUP -eq 1 ]] || return 0
     if [[ $KEEP_FILES -eq 1 ]]; then
@@ -105,6 +106,17 @@ cleanup() {
     rm -rf "$HOME/.cache/scb-oot"/lichii-*          # the Lichii build-125 sources scb-oot downloads
     rmdir "$HOME/.cache/scb-oot" 2>/dev/null || true
 }
+restore_pacman_conf() {
+    if [[ $PACMAN_CONF_CHANGED -eq 1 ]]; then
+        echo "== Restoring /etc/pacman.conf"
+        if sudo cp /etc/pacman.conf.scb-oot.bak /etc/pacman.conf; then
+            sudo rm -f /etc/pacman.conf.scb-oot.bak
+            PACMAN_CONF_CHANGED=0
+        else
+            echo "WARNING: could not restore /etc/pacman.conf; the original is in /etc/pacman.conf.scb-oot.bak" >&2
+        fi
+    fi
+}
 restore_readonly() {
     if [[ $READONLY_CHANGED -eq 1 ]]; then
         echo; echo "== Re-enabling read-only mode"
@@ -114,6 +126,7 @@ restore_readonly() {
 }
 on_exit() {
     local status=$?
+    restore_pacman_conf
     restore_readonly
     cleanup
     exit $status
@@ -155,8 +168,9 @@ if [[ $SKIP_DEPS -eq 0 && $SCB_HELP -eq 0 ]]; then
         sudo pacman-key --populate archlinux holo
 
         if grep -qE '^\s*NoExtract.*usr/include' /etc/pacman.conf; then
-            echo "== Allowing pacman to install header files (backup: /etc/pacman.conf.scb-oot.bak)"
+            echo "== Allowing pacman to install header files for now (backup: /etc/pacman.conf.scb-oot.bak)"
             sudo cp /etc/pacman.conf /etc/pacman.conf.scb-oot.bak
+            PACMAN_CONF_CHANGED=1
             sudo sed -i -E 's|^(\s*NoExtract.*usr/include.*)$|#\1|' /etc/pacman.conf
         fi
 
@@ -164,6 +178,7 @@ if [[ $SKIP_DEPS -eq 0 && $SCB_HELP -eq 0 ]]; then
         [[ ${#REINSTALL[@]} -eq 0 ]] || sudo pacman -S --noconfirm --overwrite '*' "${REINSTALL[@]}"
         [[ ${#INSTALL[@]} -eq 0 ]] || sudo pacman -S --noconfirm --needed "${INSTALL[@]}"
 
+        restore_pacman_conf
         restore_readonly
         READONLY_CHANGED=0
     fi

@@ -220,8 +220,10 @@ Only when something is missing:
 - **Packages:** `glibc`, `linux-api-headers` and/or `gcc` are reinstalled to restore their header files;
   any of `gcc`, `binutils`, `git`, `python`, `zstd`, `vulkan-tools` that are missing get installed.
   Nothing else is touched.
-- If `/etc/pacman.conf` tells pacman to skip `/usr/include`, that line is commented out (a backup is
-  saved as `/etc/pacman.conf.scb-oot.bak`).
+- If `/etc/pacman.conf` tells pacman to skip `/usr/include`, that line is commented out for the
+  install only. The original file is put back right afterwards, also if the install fails, before
+  read-only mode is switched back on. (If restoring ever fails, the script says so and the original is
+  in `/etc/pacman.conf.scb-oot.bak`.)
 
 Always:
 
