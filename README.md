@@ -13,8 +13,29 @@ back on.
 > This repository contains no game files and no shader code. The shader code is generated on your
 > Deck from your own copy of the game, and nothing is uploaded anywhere.
 
+## Disclaimer
+
+**Use this script at your own risk.** It is provided as is, without any warranty, as described in
+sections 15 and 16 of the [GPL-3.0 license](LICENSE). The authors are not responsible for any damage,
+data loss or other problems it may cause.
+
+Before running it, be aware that it:
+
+- **changes your system:** it turns off SteamOS read-only mode for a while, installs and reinstalls
+  system packages with `sudo`, and temporarily edits `/etc/pacman.conf`. A mistake there, a failed
+  download or an interrupted run can leave your system in a broken or unexpected state. If that
+  happens, a SteamOS update or a reinstall resets the system partition.
+- **replaces your shader cache:** scb-oot backs up the existing cache first, but keep your own copy of
+  anything you can't afford to lose.
+- **depends on other projects:** it downloads and runs code from scb-oot and Lichii, which can change
+  at any time and aren't maintained here.
+
+Read the script before you run it. Only use it with a copy of the game you own and have dumped
+yourself.
+
 ## Contents
 
+- [Disclaimer](#disclaimer)
 - [What the script does](#what-the-script-does)
 - [Requirements](#requirements)
 - [Getting the script onto the Deck](#getting-the-script-onto-the-deck)
