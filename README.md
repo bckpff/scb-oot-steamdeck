@@ -20,9 +20,10 @@ switching read-only mode back on.
 
 ## Disclaimer
 
-**Use this script at your own risk.** It is provided as is, without any warranty, as described in
-sections 15 and 16 of the [GPL-3.0 license](LICENSE). The authors are not responsible for any damage,
-data loss or other problems it may cause.
+> [!CAUTION]
+> **Use this script at your own risk.** It is provided as is, without any warranty, as described in
+> sections 15 and 16 of the [GPL-3.0 license](LICENSE). The authors are not responsible for any damage,
+> data loss or other problems it may cause.
 
 Before running it, be aware that it:
 
